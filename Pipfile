@@ -10,6 +10,8 @@ isort = "*"
 djangorestframework = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
+rest-framework-simplejwt = "*"
+djoser = "*"
 
 [dev-packages]
 
