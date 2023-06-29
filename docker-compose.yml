@@ -3,7 +3,7 @@ services:
   booking_app:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8001"
     restart: on-failure
     env_file:
       - .env
@@ -19,7 +19,7 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASS}
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
-      - "5433:5432"
+      - "5431:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/booking_data
 volumes:
