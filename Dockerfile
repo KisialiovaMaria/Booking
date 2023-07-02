@@ -7,6 +7,6 @@ ENV PYTHONUNBUFFERED 1
 
 COPY Pipfile Pipfile.lock ./
 RUN python -m pip install --upgrade pip
-RUN pip install pipenv && pipenv install --system
+RUN pip install pipenv==2023.5.19 && pipenv install --system
 
 COPY . .

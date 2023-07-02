@@ -4,7 +4,7 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-from booking.models import Booking
+from booking.models import Booking, Room
 
 
 class BookingSerializer(ModelSerializer):
@@ -36,3 +36,13 @@ class BookingSerializer(ModelSerializer):
             )
 
         return attrs
+
+
+class RoomSerializer(ModelSerializer):
+    class Meta:
+        model = Room
+        fields = (
+            "number",
+            "cost_per_day",
+            "beds_numder",
+        )
