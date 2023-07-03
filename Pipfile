@@ -8,6 +8,11 @@ django = "*"
 black = "*"
 isort = "*"
 djangorestframework = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
+rest-framework-simplejwt = "*"
+djoser = "*"
+pre-commit = "*"
 
 [dev-packages]
 
