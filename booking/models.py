@@ -7,6 +7,9 @@ class Room(models.Model):
     cost_per_day = models.DecimalField(max_digits=7, decimal_places=2)
     beds_numder = models.IntegerField()
 
+    def __str__(self):
+        return str(self.number)
+
 
 class Booking(models.Model):
     book_start = models.DateField()
