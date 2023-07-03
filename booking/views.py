@@ -1,10 +1,9 @@
-import generics as generics
+from django.db.models import Q
 from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework import mixins, status, viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
 
 from booking import permissions
 from booking.models import Booking, Room
@@ -28,13 +27,34 @@ class BookingViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 class CancelBookViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
     serializer_class = BookingSerializer
     queryset = Booking.objects.all()
-    permission_classes = (IsAuthenticated, permissions.IsBookedPerson)
+    permission_classes = (
+        IsAuthenticated,
+        permissions.IsBookedPerson | permissions.IsSuperuser,
+    )
 
 
-class RoomsViewSet(ModelViewSet):
+class RoomsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = RoomSerializer
     permission_classes = ()
     queryset = Room.objects.all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ["cost_per_day", "beds_numder"]
     ordering_fields = "__all__"
+
+
+class SearchFreeRoomsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = RoomSerializer
+    permission_classes = ()
+
+    def get_queryset(self):
+
+        book_start: str = self.request.query_params.get("start_date")
+        book_end: str = self.request.query_params.get("end_date")
+
+        if book_end and book_start:
+            non_booking_rooms = Room.objects.exclude(
+                Q(booking__book_start__lte=book_end)
+                & Q(booking__book_end__gte=book_start)
+            )
+
+        return non_booking_rooms
