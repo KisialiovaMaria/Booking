@@ -10,27 +10,38 @@ from booking.models import Booking, Room
 from booking.serializers import BookingSerializer, RoomSerializer
 
 
-class BookingViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class BookingViewSet(
+    permissions.PermissionPolicyMixin,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     serializer_class = BookingSerializer
-    queryset = Room.objects.all()
+    queryset = Booking.objects.all()
     permission_classes = (IsAuthenticated,)
+    permission_classes = {
+        "create": (IsAuthenticated,),
+        "list": (IsAuthenticated,),
+        "destroy": (
+            IsAuthenticated,
+            permissions.IsBookedPerson | permissions.IsSuperuser,
+        ),
+    }
 
     def create(self, request, *args, **kwargs):
-        request.data["user"] = request.user.id
+        request.data["user"]: int = request.user.id
         serializer: BookingSerializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
         return Response(serializer.data, status.HTTP_201_CREATED)
 
+    def list(self, request, *args, **kwargs):
+        self.queryset = Booking.objects.filter(user=request.user)
+        response = super().list(request, *args, **kwargs)
 
-class CancelBookViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    serializer_class = BookingSerializer
-    queryset = Booking.objects.all()
-    permission_classes = (
-        IsAuthenticated,
-        permissions.IsBookedPerson | permissions.IsSuperuser,
-    )
+        return response
 
 
 class RoomsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -47,7 +58,6 @@ class SearchFreeRoomsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = ()
 
     def get_queryset(self):
-
         book_start: str = self.request.query_params.get("start_date")
         book_end: str = self.request.query_params.get("end_date")
 
