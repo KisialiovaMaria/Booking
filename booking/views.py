@@ -1,4 +1,10 @@
-from django.db.models import Q
+import operator
+
+import django_filters
+from django.contrib.auth.models import User
+from django.db.models import Count, Q, QuerySet
+from django_filters import DateFilter
+from django_filters.rest_framework import FilterSet
 from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework import mixins, status, viewsets
 from rest_framework.filters import OrderingFilter
@@ -7,7 +13,11 @@ from rest_framework.response import Response
 
 from booking import permissions
 from booking.models import Booking, Room
-from booking.serializers import BookingSerializer, RoomSerializer
+from booking.serializers import (
+    BookingSerializer,
+    RoomSerializer,
+    UserRegistrySerializer,
+)
 
 
 class BookingViewSet(
@@ -48,23 +58,38 @@ class RoomsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = RoomSerializer
     permission_classes = ()
     queryset = Room.objects.all()
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ["cost_per_day", "beds_numder"]
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_fields = ("cost_per_day", "beds_numder")
     ordering_fields = "__all__"
+
+
+class FreeRoomsFilter(django_filters.FilterSet):
+    start_date = DateFilter(
+        field_name="booking__book_end", lookup_expr=("lte"), required=True
+    )
+    end_date = DateFilter(
+        field_name="booking__book_start", lookup_expr=("gte"), required=True
+    )
+
+    class Meta:
+        model = Room
+        fields = ["start_date", "end_date"]
 
 
 class SearchFreeRoomsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = RoomSerializer
     permission_classes = ()
+    queryset = Room.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = FreeRoomsFilter
 
-    def get_queryset(self):
-        book_start: str = self.request.query_params.get("start_date")
-        book_end: str = self.request.query_params.get("end_date")
 
-        if book_end and book_start:
-            non_booking_rooms = Room.objects.exclude(
-                Q(booking__book_start__lte=book_end)
-                & Q(booking__book_end__gte=book_start)
-            )
+class RegistryViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserRegistrySerializer
 
-        return non_booking_rooms
+    def create(self, request, *args, **kwargs):
+        serializer: UserRegistrySerializer = UserRegistrySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
