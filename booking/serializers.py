@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
@@ -46,3 +47,30 @@ class RoomSerializer(ModelSerializer):
             "cost_per_day",
             "beds_numder",
         )
+
+
+class UserRegistrySerializer(ModelSerializer):
+    conf_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ("username", "password", "conf_password")
+
+    def validate(self, data):
+        password = data.get("password")
+        conf_password = data.get("conf_password")
+        if password != conf_password:
+            raise serializers.ValidationError(
+                "password and password confirmation are not match"
+            )
+        data.pop("conf_password")
+
+        return data
+
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+        instance = User(**validated_data)
+        instance.set_password(password)
+        instance.save()
+
+        return instance

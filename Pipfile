@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
+django = "==3.2"
 black = "*"
 isort = "*"
 djangorestframework = "*"
@@ -13,6 +13,7 @@ psycopg2-binary = "*"
 rest-framework-simplejwt = "*"
 djoser = "*"
 pre-commit = "*"
+django-filter = "*"
 
 [dev-packages]
 
